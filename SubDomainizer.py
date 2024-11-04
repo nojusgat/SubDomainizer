@@ -887,7 +887,7 @@ if __name__ == "__main__":
         print(termcolor.colored("\nFinding additional subdomains using Subject Alternative Names(SANs)...\n", color='yellow', attrs=['bold']))
         nothing_found_flag = True
         context = ssl.create_default_context()
-        context.check_hostname = False
+        context.check_hostname = True
 
         socket.setdefaulttimeout(5)
 
