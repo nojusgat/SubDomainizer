@@ -21,7 +21,7 @@ import socket
 import ssl
 import htmlmin
 from urllib.parse import *
-import tldextract
+import tld_extract
 import sys
 from multiprocessing.dummy import Pool as ThreadPool
 from itertools import repeat
@@ -56,10 +56,10 @@ url = args.url
 listfile = args.listfile
 cloudop = args.cloudop
 secretop = args.secretop
-gitToken = args.gittoken
-isGit = args.gitscan
-isSSL = args.nossl
-folderName = args.folder
+git_token = args.gittoken
+is_git = args.gitscan
+is_ssl = args.nossl
+folder_name = args.folder
 is_san = args.subject_alt_name
 githubsc_out = args.gitsecretop
 
@@ -99,26 +99,26 @@ def argerror(urls, listfile):
         pass
 
 
-def gitArgError(gitToken, isGit):
+def git_arg_error(git_token, is_git):
     """
 
     This function will check if both -g and -gt arguments were provided or not, required for GitHub scanning.
 
     Parameters
     ----------
-    gitToken : str
+    git_token : str
         Authtoken provided by github.
-    isGit : None
+    is_git : None
         This argument will be used to tell the program to scan GitHub for information.
     """
-    if (gitToken is None and isGit is not None) or (gitToken is not None and isGit is None):
+    if (git_token is None and is_git is not None) or (git_token is not None and is_git is None):
         print("Either both '-g' and '-gt' arguments are required or none required. Exiting...")
         sys.exit(1)
     else:
         pass
 
 
-def getRecursiveFolderData(rootfolder):
+def get_recursive_folder_data(rootfolder):
     """
 
     This function will get all the files path (including filename) recursively, given root folder.
@@ -146,7 +146,7 @@ def getRecursiveFolderData(rootfolder):
     return folderData, len(folderData)
 
 
-def getUrlsFromFile():
+def get_urls_from_file():
     """
 
     Getting urls from file provided in input, file contains url seperated by newline.
@@ -169,17 +169,17 @@ class JsExtract:
 
     Methods
     -------
-    IntJsExtract(url, headers)
+    int_js_extract(url, headers)
         It will get the data from Inline JS present within the page.
     -------
-    ExtJsExtract(url, headers)
+    ext_js_extract(url, headers)
         It will get JS links present within source code of the page.
     -------
-    SaveExtJsContent(js = JavascriptFileURL)
+    save_ext_js_content(js = JavascriptFileURL)
         This module will get the data from JS URL provided and add data in master list (finallist).
     """
 
-    def IntJsExtract(self, url, heads):
+    def int_js_extract(self, url, heads):
         """
 
         Parameters
@@ -197,12 +197,12 @@ class JsExtract:
         """
 
         if url.startswith('http://') or url.startswith('https://'):
-            if isSSL:
+            if is_ssl:
                 req = requests.get(url, headers=heads, verify=True, timeout=(20, 20))
             else:
                 req = requests.get(url, headers=heads, timeout=(20, 20))
         else:
-            if isSSL:
+            if is_ssl:
                 req = requests.get('http://' + url, headers=heads, verify=True, timeout=(20, 20))
             else:
                 req = requests.get('http://' + url, headers=heads, timeout=(20, 20))
@@ -224,7 +224,7 @@ class JsExtract:
                 print("Error, Exiting...")
                 sys.exit(1)
 
-    def ExtJsExtract(self, url, heads):
+    def ext_js_extract(self, url, heads):
         """
 
         Parameters
@@ -245,12 +245,12 @@ class JsExtract:
         print(termcolor.colored(
             "Searching for External Javascript links in page...", color='yellow', attrs=['bold']))
         if url.startswith('http://') or url.startswith('https://'):
-            if isSSL:
+            if is_ssl:
                 req = requests.get(url, headers=heads, verify=True, timeout=(20,20))
             else:
                 req = requests.get(url, headers=heads, timeout=(20, 20))
         else:
-            if isSSL:
+            if is_ssl:
                 req = requests.get('http://' + url, headers=heads, verify=True, timeout=(20, 20))
             else:
                 req = requests.get('http://' + url, headers=heads, timeout=(20, 20))
@@ -267,7 +267,7 @@ class JsExtract:
         except UnicodeDecodeError:
             print("Decoding error.")
 
-    def SaveExtJsContent(self, js):
+    def save_ext_js_content(self, js):
         """
 
         Parameters
@@ -276,7 +276,7 @@ class JsExtract:
             Link to the URL of external Javascript file.
         """
         try:
-            if isSSL:
+            if is_ssl:
                 content = unquote(requests.get(js, verify=True, headers=heads, timeout=(20, 20)).content.decode('utf-8'))
                 finallist.append(content)
                 new_final_dict[str(js)] = content
@@ -328,7 +328,7 @@ def entropy(s):
     return -sum(i / len(s) * log2(i / len(s)) for i in Counter(s).values())
 
 
-def getDomain(url):
+def get_domain(url):
     """
 
     This function will get top level domain from given URL.
@@ -345,15 +345,15 @@ def getDomain(url):
     """
     if urlparse(url).netloc != '':
         finalset.add(urlparse(url).netloc)
-    ext = tldextract.extract(str(url))
+    ext = tld_extract.extract(str(url))
     return ext.registered_domain
 
 
-def tldExt(name):
-    return tldextract.extract(name).registered_domain
+def tld_ext(name):
+    return tld_extract.extract(name).registered_domain
 
 
-def tldSorting(subdomainList):
+def tld_sorting(subdomainList):
     """
 
     This function will sort all the items within the list in dictionary order.
@@ -455,7 +455,7 @@ def pre_compiled_domain_regex(url):
     url: str
         Original URL from user provided input (URL argument).
     """
-    regex = re.compile(r'([a-zA-Z0-9][a-zA-Z0-9\-.]*[a-zA-Z0-9]\.' + str(getDomain(str(url))) + ')', re.IGNORECASE)
+    regex = re.compile(r'([a-zA-Z0-9][a-zA-Z0-9\-.]*[a-zA-Z0-9]\.' + str(get_domain(str(url))) + ')', re.IGNORECASE)
     return regex
 
 
@@ -530,7 +530,7 @@ def custom_domains_regex(domains):
     domainreg = re.compile(r'(' + _domains[:-1] + ')', re.IGNORECASE)
     return domainreg
 
-def getUrlsFromData(gitToken, domain):
+def get_urls_from_data(git_token, domain):
     """
 
     This function will get URLs which contains data related to domain from GitHub API.
@@ -551,7 +551,7 @@ def getUrlsFromData(gitToken, domain):
     datas = list()
     contentApiURLs = set()
 
-    headers = {"Authorization": "token " + gitToken}
+    headers = {"Authorization": "token " + git_token}
     datas.append(requests.get(
         'https://api.github.com/search/code?q="'+ domain +'"&per_page=100&sort=indexed',
         verify=True, headers=headers, timeout=(20, 20)).content.decode('utf-8'))
@@ -581,7 +581,7 @@ def get_github_data(item):
         URL pointing to github data related to the given domain.
 
     """
-    headers = {"Authorization": "token " + gitToken}
+    headers = {"Authorization": "token " + git_token}
 
     try:
         apiUrlContent = requests.get(
@@ -615,10 +615,10 @@ def subextractor(cloudlist, p, regex, ipv4reg, url, precompiled_domains_regex):
         Original URL from user provided input (URL argument).
     """
     jsfile = JsExtract()
-    jsfile.IntJsExtract(url, heads)
-    jsfile.ExtJsExtract(url, heads)
+    jsfile.int_js_extract(url, heads)
+    jsfile.ext_js_extract(url, heads)
     jsthread = ThreadPool(8)
-    jsthread.map(jsfile.SaveExtJsContent, jsLinkList)
+    jsthread.map(jsfile.save_ext_js_content, jsLinkList)
     jsthread.close()
     jsthread.join()
     print(termcolor.colored("Finding secrets, cloud URLs, subdomains in all Javascript files...",
@@ -644,7 +644,7 @@ def savedata():
     print(termcolor.colored(
         "\nWriting all the subdomains to given file...\n", color='yellow', attrs=['bold']))
     with open(args.output, 'w+') as f:
-        for item in tldSorting(finalset):
+        for item in tld_sorting(finalset):
             f.write(item + '\n')
     print(termcolor.colored("\nWriting Done..\n", color='yellow', attrs=['bold']))
 
@@ -702,25 +702,25 @@ if __name__ == "__main__":
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
         # disable insecure ssl warning.
-        if isSSL:
+        if is_ssl:
             print(termcolor.colored("Disabled SSL Certificate Checking...", color='green', attrs=['bold']))
 
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
         # checking if only folder needs to be scanned.
-        if folderName and not url and not listfile:
+        if folder_name and not url and not listfile:
 
-            # if isGit:
-            #     gitArgError(gitToken, isGit)
+            # if is_git:
+            #     git_arg_error(git_token, is_git)
 
             print(termcolor.colored("Getting data from folder recursively...", color='yellow',
                                     attrs=['bold']))
-            if not os.path.isfile(folderName):
-                folderData, totalLength = getRecursiveFolderData(folderName)
+            if not os.path.isfile(folder_name):
+                folderData, totalLength = get_recursive_folder_data(folder_name)
             else:
                 folderData = dict()
                 totalLength = 1
-                file_name = folderName
+                file_name = folder_name
                 with open(file_name, 'rt', errors='ignore') as file:
                     try:
                         folderData[file_name] = file.read()
@@ -755,14 +755,14 @@ if __name__ == "__main__":
         
         else:
             argerror(url, listfile)
-            if isGit:
-                gitArgError(gitToken, isGit)
+            if is_git:
+                git_arg_error(git_token, is_git)
             if listfile:
-                urllist = getUrlsFromFile()
+                urllist = get_urls_from_file()
                 if urllist:
                     for i in urllist:
                         compiledRegexDomain = pre_compiled_domain_regex(i)
-                        domainSet.add(str(getDomain(str(i))))
+                        domainSet.add(str(get_domain(str(i))))
                         print(termcolor.colored("Extracting data from internal and external js for url:", color='blue', attrs=['bold']))
                         print(termcolor.colored(i, color='red', attrs=['bold']))
                         try:
@@ -781,7 +781,7 @@ if __name__ == "__main__":
                 try:
                     try:
                         compiledRegexDomain = pre_compiled_domain_regex(url)
-                        domainSet.add(str(getDomain(str(url))))
+                        domainSet.add(str(get_domain(str(url))))
                         subextractor(compiledRegexCloud, compiledRegexSecretList,
                                      compiledRegexDomain, compiledRegexIP, url, precompiled_domains_regex)
                     except requests.exceptions.ConnectionError:
@@ -797,7 +797,7 @@ if __name__ == "__main__":
                     print("Invalid Schema Provided!")
                     sys.exit(1)
 
-            if gitToken and isGit:
+            if git_token and is_git:
                 for item in domainSet:
                     compiledRegexDomain = pre_compiled_domain_regex(item)
                     print(
@@ -807,7 +807,7 @@ if __name__ == "__main__":
                         'Searching in github for : ' + termcolor.colored(item, color='green', attrs=['bold']), color='blue', attrs=['bold']))
 
                     gitThread = ThreadPool(8)
-                    contentApiURLs = getUrlsFromData(gitToken, str(item))
+                    contentApiURLs = get_urls_from_data(git_token, str(item))
                     gitThread.map(get_github_data, contentApiURLs)
                     gitContentThread = ThreadPool(8)
                     try:
@@ -852,7 +852,7 @@ if __name__ == "__main__":
     if finalset:
         print(termcolor.colored("\nGot some subdomains...", color='yellow', attrs=['bold']))
         print(termcolor.colored('Total Subdomains: ' + str(len(finalset)), color='red', attrs=['bold']))
-        for item in tldSorting(finalset):
+        for item in tld_sorting(finalset):
             print(termcolor.colored(item, color='green', attrs=['bold']))
 
     if cloudurlset:
@@ -873,7 +873,7 @@ if __name__ == "__main__":
                 print(termcolor.colored(secret, color='green', attrs=['bold']),
                       termcolor.colored("| " + file_url, color='yellow', attrs=['bold']))
     
-    if isGit and github_secrets:
+    if is_git and github_secrets:
         print(termcolor.colored('_' * 60, color='white', attrs=['bold']))
         print(termcolor.colored("\nWriting github secrets to the given file...", color='yellow', attrs=['bold']))
         try:
@@ -882,7 +882,7 @@ if __name__ == "__main__":
         except:
             print(termcolor.colored("\nError in saving the github secrets file...", color='red', attrs=['bold']))
 
-    if is_san in ("same", "all") and url and not folderName:
+    if is_san in ("same", "all") and url and not folder_name:
         print(termcolor.colored('_' * 60, color='white', attrs=['bold']))
         print(termcolor.colored("\nFinding additional subdomains using Subject Alternative Names(SANs)...\n", color='yellow', attrs=['bold']))
         nothing_found_flag = True
@@ -895,10 +895,10 @@ if __name__ == "__main__":
         printed = set()
         completed = set()
 
-        finalset.add(tldExt(url))
+        finalset.add(tld_ext(url))
 
         for host in finalset:
-            tld = getDomain(host)
+            tld = get_domain(host)
             q.put(host)
             while not q.empty():
                 try:
