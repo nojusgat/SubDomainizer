@@ -21,7 +21,7 @@ import socket
 import ssl
 import htmlmin
 from urllib.parse import *
-import tld_extract
+import tldextract
 import sys
 from multiprocessing.dummy import Pool as ThreadPool
 from itertools import repeat
@@ -63,7 +63,7 @@ folder_name = args.folder
 is_san = args.subject_alt_name
 githubsc_out = args.gitsecretop
 
-jsLinkList = list()
+js_link_list = list()
 jsname = list()
 finalset = set()
 new_final_dict = dict()
@@ -118,7 +118,7 @@ def git_arg_error(git_token, is_git):
         pass
 
 
-def get_recursive_folder_data(rootfolder):
+def get_recursive_folder_data(root_folder):
     """
 
     This function will get all the files path (including filename) recursively, given root folder.
@@ -135,15 +135,15 @@ def get_recursive_folder_data(rootfolder):
     int
         total number of (only) files within the root folder.
     """
-    folderData = dict()
-    for filename in glob.iglob(rootfolder + '**/**', recursive=True):
+    folder_data = dict()
+    for filename in glob.iglob(root_folder + '**/**', recursive=True):
         if os.path.isfile(filename):
             with open(filename, 'r') as file:
                 try:
-                    folderData[filename] = file.read()
+                    folder_data[filename] = file.read()
                 except UnicodeDecodeError:
                     pass
-    return folderData, len(folderData)
+    return folder_data, len(folder_data)
 
 
 def get_urls_from_file():
@@ -262,7 +262,7 @@ class JsExtract:
                 for link in soup.find_all('script'):
                     if link.get('src'):
                         text = urljoin(url, link.get('src'))
-                        jsLinkList.append(text)
+                        js_link_list.append(text)
                 print(termcolor.colored("Successfully got all the external js links.", color='blue', attrs=['bold']))
         except UnicodeDecodeError:
             print("Decoding error.")
@@ -345,22 +345,22 @@ def get_domain(url):
     """
     if urlparse(url).netloc != '':
         finalset.add(urlparse(url).netloc)
-    ext = tld_extract.extract(str(url))
+    ext = tldextract.extract(str(url))
     return ext.registered_domain
 
 
 def tld_ext(name):
-    return tld_extract.extract(name).registered_domain
+    return tldextract.extract(name).registered_domain
 
 
-def tld_sorting(subdomainList):
+def tld_sorting(subdomain_list):
     """
 
     This function will sort all the items within the list in dictionary order.
 
     Parameters
     -------
-    subdomainList: list
+    subdomain_list: list
         List of subdomains found from content.
 
     Returns
@@ -369,19 +369,19 @@ def tld_sorting(subdomainList):
         a list of subdomains.
     """
 
-    localsortedlist = list()
-    finallist = list()
-    for item in subdomainList:
-        Reverseddomain = ".".join(str(item).split('.')[::-1])
-        localsortedlist.append(Reverseddomain)
+    local_sorted_list = list()
+    final_list = list()
+    for item in subdomain_list:
+        reversed_domain = ".".join(str(item).split('.')[::-1])
+        local_sorted_list.append(reversed_domain)
 
-    sortedlist = sorted(localsortedlist)
+    sorted_list = sorted(local_sorted_list)
 
-    for item in sortedlist:
-        reReverseddomain = ".".join(str(item).split('.')[::-1])
-        finallist.append(reReverseddomain)
+    for item in sorted_list:
+        re_reversed_domain = ".".join(str(item).split('.')[::-1])
+        final_list.append(re_reversed_domain)
 
-    return finallist
+    return final_list
 
 
 def pre_compiled_secret_regex():
@@ -549,7 +549,7 @@ def get_urls_from_data(git_token, domain):
     """
 
     datas = list()
-    contentApiURLs = set()
+    content_api_urls = set()
 
     headers = {"Authorization": "token " + git_token}
     datas.append(requests.get(
@@ -565,9 +565,9 @@ def get_urls_from_data(git_token, domain):
             for item in data['items']:
                 for key, value in item.items():
                     if key == 'url':
-                        contentApiURLs.add(value)
+                        content_api_urls.add(value)
 
-    return contentApiURLs
+    return content_api_urls
 
 
 def get_github_data(item):
@@ -584,13 +584,13 @@ def get_github_data(item):
     headers = {"Authorization": "token " + git_token}
 
     try:
-        apiUrlContent = requests.get(
+        api_url_content = requests.get(
             item, verify=True, timeout=(20, 20), headers=headers).content.decode('utf-8')
-        jsonData = json.loads(apiUrlContent)
-        _data = base64.b64decode(jsonData['content'])
+        json_data = json.loads(api_url_content)
+        _data = base64.b64decode(json_data['content'])
         _data = unquote(unquote(str(_data, 'utf-8')))
         final_data = str(_data.replace('\n', ' '))
-        git_data[jsonData.get('html_url').split("?ref=")[0]] = final_data
+        git_data[json_data.get('html_url').split("?ref=")[0]] = final_data
 
     except (requests.ConnectionError, requests.exceptions.ReadTimeout):
         pass
@@ -618,7 +618,7 @@ def subextractor(cloudlist, p, regex, ipv4reg, url, precompiled_domains_regex):
     jsfile.int_js_extract(url, heads)
     jsfile.ext_js_extract(url, heads)
     jsthread = ThreadPool(8)
-    jsthread.map(jsfile.save_ext_js_content, jsLinkList)
+    jsthread.map(jsfile.save_ext_js_content, js_link_list)
     jsthread.close()
     jsthread.join()
     print(termcolor.colored("Finding secrets, cloud URLs, subdomains in all Javascript files...",
@@ -685,10 +685,10 @@ def printlogo():
 
 if __name__ == "__main__":
 
-    domainSet = set()
-    compiledRegexCloud = pre_compiled_cloud_regex()
-    compiledRegexSecretList = pre_compiled_secret_regex()
-    compiledRegexIP = pre_compiled_ip_regex()
+    domain_set = set()
+    compiled_regex_cloud = pre_compiled_cloud_regex()
+    compiled_regex_secret_list = pre_compiled_secret_regex()
+    compiled_regex_ip = pre_compiled_ip_regex()
 
     if args.domains:
         precompiled_domains_regex = custom_domains_regex(args.domains)
@@ -716,30 +716,30 @@ if __name__ == "__main__":
             print(termcolor.colored("Getting data from folder recursively...", color='yellow',
                                     attrs=['bold']))
             if not os.path.isfile(folder_name):
-                folderData, totalLength = get_recursive_folder_data(folder_name)
+                folder_data, total_length = get_recursive_folder_data(folder_name)
             else:
-                folderData = dict()
-                totalLength = 1
+                folder_data = dict()
+                total_length = 1
                 file_name = folder_name
                 with open(file_name, 'rt', errors='ignore') as file:
                     try:
-                        folderData[file_name] = file.read()
+                        folder_data[file_name] = file.read()
                     except UnicodeDecodeError:
                         pass
 
             print(termcolor.colored(
-                "\nTotal files to scan: " + str(totalLength) + '\n', color='red', attrs=['bold']))
+                "\nTotal files to scan: " + str(total_length) + '\n', color='red', attrs=['bold']))
 
             time.sleep(0.5)
             print(termcolor.colored("Finding secrets in files, Please wait...", color='blue',
                                     attrs=['bold']))
-            for path, data in folderData.items():
+            for path, data in folder_data.items():
 
-                for cloud in compiledRegexCloud:
+                for cloud in compiled_regex_cloud:
                     for item in cloud.findall(str(data.replace('\n', ' '))):
                         cloudurlset.add(item)
 
-                matches = compiledRegexSecretList.finditer(
+                matches = compiled_regex_secret_list.finditer(
                     str(data.replace('\n', ' ')))
                 for matchNum, match in enumerate(matches):
                     if entropy(match.group(2)) > 3:
@@ -761,14 +761,14 @@ if __name__ == "__main__":
                 urllist = get_urls_from_file()
                 if urllist:
                     for i in urllist:
-                        compiledRegexDomain = pre_compiled_domain_regex(i)
-                        domainSet.add(str(get_domain(str(i))))
+                        compiled_regex_domain = pre_compiled_domain_regex(i)
+                        domain_set.add(str(get_domain(str(i))))
                         print(termcolor.colored("Extracting data from internal and external js for url:", color='blue', attrs=['bold']))
                         print(termcolor.colored(i, color='red', attrs=['bold']))
                         try:
                             try:
-                                subextractor(compiledRegexCloud, compiledRegexSecretList, compiledRegexDomain,
-                                             compiledRegexIP, i, precompiled_domains_regex)
+                                subextractor(compiled_regex_cloud, compiled_regex_secret_list, compiled_regex_domain,
+                                             compiled_regex_ip, i, precompiled_domains_regex)
                             except requests.exceptions.ConnectionError:
                                 print('An error occured while fetching URL, Might be URL is wrong, Please check!')
                         except requests.exceptions.InvalidSchema:
@@ -780,10 +780,10 @@ if __name__ == "__main__":
             else:
                 try:
                     try:
-                        compiledRegexDomain = pre_compiled_domain_regex(url)
-                        domainSet.add(str(get_domain(str(url))))
-                        subextractor(compiledRegexCloud, compiledRegexSecretList,
-                                     compiledRegexDomain, compiledRegexIP, url, precompiled_domains_regex)
+                        compiled_regex_domain = pre_compiled_domain_regex(url)
+                        domain_set.add(str(get_domain(str(url))))
+                        subextractor(compiled_regex_cloud, compiled_regex_secret_list,
+                                     compiled_regex_domain, compiled_regex_ip, url, precompiled_domains_regex)
                     except requests.exceptions.ConnectionError:
                         print(
                             termcolor.colored(
@@ -798,23 +798,23 @@ if __name__ == "__main__":
                     sys.exit(1)
 
             if git_token and is_git:
-                for item in domainSet:
-                    compiledRegexDomain = pre_compiled_domain_regex(item)
+                for item in domain_set:
+                    compiled_regex_domain = pre_compiled_domain_regex(item)
                     print(
                         termcolor.colored('Finding Subdomains and secrets from Github..Please wait...', color='yellow',
                                           attrs=['bold']))
                     print(termcolor.colored(
                         'Searching in github for : ' + termcolor.colored(item, color='green', attrs=['bold']), color='blue', attrs=['bold']))
 
-                    gitThread = ThreadPool(8)
-                    contentApiURLs = get_urls_from_data(git_token, str(item))
-                    gitThread.map(get_github_data, contentApiURLs)
-                    gitContentThread = ThreadPool(8)
+                    git_thread = ThreadPool(8)
+                    content_api_urls = get_urls_from_data(git_token, str(item))
+                    git_thread.map(get_github_data, content_api_urls)
+                    git_content_thread = ThreadPool(8)
                     try:
-                        gitContentThread.starmap(get_info_from_data,
-                                                 zip(git_data.keys(), git_data.values(), repeat(compiledRegexCloud),
-                                                     repeat(compiledRegexSecretList),
-                                                     repeat(compiledRegexDomain), repeat(compiledRegexIP),
+                        git_content_thread.starmap(get_info_from_data,
+                                                 zip(git_data.keys(), git_data.values(), repeat(compiled_regex_cloud),
+                                                     repeat(compiled_regex_secret_list),
+                                                     repeat(compiled_regex_domain), repeat(compiled_regex_ip),
                                                      repeat(item), repeat(custom_domains_regex)))
                     except:
                         pass
