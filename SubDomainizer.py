@@ -198,12 +198,12 @@ class JsExtract:
 
         if url.startswith('http://') or url.startswith('https://'):
             if isSSL:
-                req = requests.get(url, headers=heads, verify=False, timeout=(20, 20))
+                req = requests.get(url, headers=heads, verify=True, timeout=(20, 20))
             else:
                 req = requests.get(url, headers=heads, timeout=(20, 20))
         else:
             if isSSL:
-                req = requests.get('http://' + url, headers=heads, verify=False, timeout=(20, 20))
+                req = requests.get('http://' + url, headers=heads, verify=True, timeout=(20, 20))
             else:
                 req = requests.get('http://' + url, headers=heads, timeout=(20, 20))
 
@@ -246,12 +246,12 @@ class JsExtract:
             "Searching for External Javascript links in page...", color='yellow', attrs=['bold']))
         if url.startswith('http://') or url.startswith('https://'):
             if isSSL:
-                req = requests.get(url, headers=heads, verify=False, timeout=(20,20))
+                req = requests.get(url, headers=heads, verify=True, timeout=(20,20))
             else:
                 req = requests.get(url, headers=heads, timeout=(20, 20))
         else:
             if isSSL:
-                req = requests.get('http://' + url, headers=heads, verify=False, timeout=(20, 20))
+                req = requests.get('http://' + url, headers=heads, verify=True, timeout=(20, 20))
             else:
                 req = requests.get('http://' + url, headers=heads, timeout=(20, 20))
         try:
@@ -277,7 +277,7 @@ class JsExtract:
         """
         try:
             if isSSL:
-                content = unquote(requests.get(js, verify=False, headers=heads, timeout=(20, 20)).content.decode('utf-8'))
+                content = unquote(requests.get(js, verify=True, headers=heads, timeout=(20, 20)).content.decode('utf-8'))
                 finallist.append(content)
                 new_final_dict[str(js)] = content
             else:
@@ -554,10 +554,10 @@ def getUrlsFromData(gitToken, domain):
     headers = {"Authorization": "token " + gitToken}
     datas.append(requests.get(
         'https://api.github.com/search/code?q="'+ domain +'"&per_page=100&sort=indexed',
-        verify=False, headers=headers, timeout=(20, 20)).content.decode('utf-8'))
+        verify=True, headers=headers, timeout=(20, 20)).content.decode('utf-8'))
     datas.append(requests.get(
         'https://api.github.com/search/code?q="' + domain +'"&per_page=100',
-        verify=False, headers=headers, timeout=(20, 20)).content.decode('utf-8'))
+        verify=True, headers=headers, timeout=(20, 20)).content.decode('utf-8'))
 
     for data in datas:
         data = json.loads(data)
@@ -585,7 +585,7 @@ def get_github_data(item):
 
     try:
         apiUrlContent = requests.get(
-            item, verify=False, timeout=(20, 20), headers=headers).content.decode('utf-8')
+            item, verify=True, timeout=(20, 20), headers=headers).content.decode('utf-8')
         jsonData = json.loads(apiUrlContent)
         _data = base64.b64decode(jsonData['content'])
         _data = unquote(unquote(str(_data, 'utf-8')))
